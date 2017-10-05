@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<info>
+    <id>facedetection</id>
+    <name>Face detection</name>
+    <description>Plugin permetant la detection des visage</description>
+    <icon>fa fa-user</icon>
+    <licence>AGPL</licence>
+    <author>Halbout Michael</author>
+    <installation>Procedure automatique ci dessous</installation>
+    <require>1.136</require>
+    <version>0.3</version>
+    <category>security</category>
+</info>
+
