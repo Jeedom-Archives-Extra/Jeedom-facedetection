@@ -5,8 +5,9 @@ include_file('core', 'FaceDetector', 'class', 'facedetection');
 class facedetection extends eqLogic {
 	public function postSave() {
 		self::AddCommande($this,'Face Detection','facedetection',"info", 'binary','');
-		self::AddCommande($this,'Snapshot','snapshots',"action", 'other','');
-		self::AddCommande($this,'Snapshot avec detection','snapshotfacedetect',"action", 'other',''); 
+		self::AddCommande($this,'Nombre de visage','NbVisage',"info", 'numeric','');
+		//self::AddCommande($this,'Snapshot','snapshots',"action", 'other','');
+		//self::AddCommande($this,'Snapshot avec detection','snapshotfacedetect',"action", 'other',''); 
 	}
 	public static function dependancy_info() {
 		$return = array();
@@ -89,14 +90,25 @@ class facedetection extends eqLogic {
 		{
 			foreach(eqLogic::byType('facedetection') as $Cameras)
 			{
-				//log::add('facedetection', 'debug', 'Lancement d\'une détéction sur la camera '.$Cameras->getName());
-				//$Cameras->execute();
+				$image='/tmp/FaceAnalyse/analyse.jpg';
+				$Camera->Snapshot($Camera->getUrl(),$image);
+				$NbVisage=$Camera->FaceDetect($image);
+				if ($NbVisage==0)
+					$Camera->checkAndUpdateCmd('facedetection',false);
+				else
+					$Camera->checkAndUpdateCmd('facedetection',true);
+				$Camera->checkAndUpdateCmd('NbVisage',$NbVisage);
 			}
 		}
 	}
-}
-
-class facedetectionCmd extends cmd {
+	public function getUrl(){
+		$url=explode('://',$this->getConfiguration('cameraUrl'));
+		if($this->getConfiguration('cameraLogin')!='' && $this->getConfiguration('cameraPass')!='')
+			$urlStream=$url[0].'://'.$this->getConfiguration('cameraLogin').':'.$this->getConfiguration('cameraPass').'@'.$url[1];
+		else
+			$urlStream=$this->getConfiguration('cameraUrl');
+		return $urlStream;
+	}
 	public function Snapshot($camurl, $image) {
 		log::add('facedetection', 'debug', 'Telechargement du flux : '.$camurl);
 		$f = fopen($camurl,"r") ;
@@ -121,60 +133,19 @@ class facedetectionCmd extends cmd {
 		fclose($f);
 	}
 	public function FaceDetect($image) {
-		
 		$detector = new FaceDetector('detection.dat');
 		log::add('facedetection', 'debug', 'Début de l\'analyse: '.$image);
 		$detector->faceDetect($image);
 		$len=count($detector->getFace())/3;
 		log::add('facedetection', 'debug', $len.' visage(s) détecté');
 		$detector->toJpeg($image);//Encadre dans la photo le visage
-		if ($len==0)
-		{
-			$this->setCollectDate('');
-			$this->event(0);
-			$this->save();
-		}
-		else
-		{
-			$this->setCollectDate('');
-			$this->event(1);
-			$this->save();
-		}
-		return $len.' visage(s) détecté';
+		return $len;
 	}
-    public function execute($_options = array()) {
-		$EqLogic=$this->getEqLogic();
-		$Camera=camera::byId($EqLogic->getConfiguration('snapshots'));
-		
-		if (netMatch('192.168.*.*', getClientIp())) {
-			$protocole = 'protocole';
-		} else {
-			$protocole = 'protocoleExt';
-		}
-		$camurl=$Camera->getUrl($Camera->getConfiguration('urlStream'), '', $protocole);
-		switch($this->getLogicalId())
-		{
-			case 'facedetection':
-				$image=dirname(__FILE__) . '/../../../../tmp/analyse.jpg';
-				self::Snapshot($camurl,$image);
-				self::FaceDetect($image);
-			break;
-			case 'snapshots':
-				$image=dirname(__FILE__) .'/../../ressources/FaceDetection/Snapshot_'.date("YmdHis").'.jpg';
-				self::Snapshot($camurl,$image);
-			break;
-			case 'snapshotfacedetect':
-				$image=dirname(__FILE__) .'/../../ressources/Snapshots/Snapshot_'.date("YmdHis").'.jpg';
-				self::Snapshot($camurl,$image);
-				self::FaceDetect($image);
-			break;
-			case 'snapshotdir':
-			break;
-			
-		}
-    }
+}
 
-    /*     * **********************Getteur Setteur*************************** */
+class facedetectionCmd extends cmd {
+    public function execute($_options = array()) {
+    }
 }
 
 ?>
