@@ -1,0 +1,11 @@
+= Face détéction
+
+== Description
+
+Ce plugin a pour but de reconaitre s'il y a un visage face a nos cameras
+
+== Installation et configuration
+
+== Paramétrage des equipements et des commandes
+
+== FAQ
