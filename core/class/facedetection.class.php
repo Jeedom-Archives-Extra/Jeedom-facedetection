@@ -1,101 +1,70 @@
 <?php
-
-/* This file is part of Jeedom.
- *
- * Jeedom is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Jeedom is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
- */
-
-/* * ***************************Includes********************************* */
 require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 include_file('core', 'FaceDetector', 'class', 'facedetection');
 
 class facedetection extends eqLogic {
-    /*     * *************************Attributs****************************** */
-
-	
-
-    /*     * ***********************Methode static*************************** */
-
-    /*
-     * Fonction exécutée automatiquement toutes les minutes par Jeedom
-      public static function cron() {
-
-      }
-     */
-
-
-    /*
-     * Fonction exécutée automatiquement toutes les heures par Jeedom
-      public static function cronHourly() {
-
-      }
-     */
-
-    /*
-     * Fonction exécutée automatiquement tous les jours par Jeedom
-      public static function cronDayly() {
-
-      }
-     */
-
-
-
-    /*     * *********************Méthodes d'instance************************* */
-
-    public function preInsert() {
-        
-    }
-
-    public function postInsert() {
-        
-    }
-
-    public function preSave() {
-        
-    }
-
-    public function postSave() {
+	public function postSave() {
 		self::AddCommande($this,'Face Detection','facedetection',"info", 'binary','');
-		self::AddCommande($this,'Snapshot','snapshots',"action", 'other','');
-		self::AddCommande($this,'Snapshot avec detection','snapshotfacedetect',"action", 'other','');
-	//	self::AddCommande($this,'Repertoire Snapshot','snapshotdir',"action", 'other','<i class="fa fa-folder-open"></i>');    
-    }
-
-    public function preUpdate() {
-        
-    }
-
-    public function postUpdate() {
-        
-    }
-
-    public function preRemove() {
-        
-    }
-
-    public function postRemove() {
-        
-    }
-
-    /*
-     * Non obligatoire mais permet de modifier l'affichage du widget si vous en avez besoin
-      public function toHtml($_version = 'dashboard') {
-
-      }
-     */
-
-    /*     * **********************Getteur Setteur*************************** */
+		self::AddCommande($this,'Nombre de visage','NbVisage',"info", 'numeric','');
+		//self::AddCommande($this,'Snapshot','snapshots',"action", 'other','');
+		//self::AddCommande($this,'Snapshot avec detection','snapshotfacedetect',"action", 'other',''); 
+	}
+	public static function dependancy_info() {
+		$return = array();
+		$return['log'] = 'facedetection_update';
+		$return['progress_file'] = '/tmp/compilation_facedetection_in_progress';
+		if (exec('dpkg -s php5-gd | grep -c "Status: install"') ==1)
+				$return['state'] = 'ok';
+		else
+			$return['state'] = 'nok';
+		return $return;
+	}
+	public static function dependancy_install() {
+		if (file_exists('/tmp/compilation_facedetection_in_progress')) {
+			return;
+		}
+		log::remove('facedetection_update');
+		$cmd = 'sudo apt-get install php5-gd';
+		$cmd .= ' >> ' . log::getPathToLog('facedetection_update') . ' 2>&1 &';
+		exec($cmd);		
+	}
+	public static function deamon_info() {
+		$return = array();
+		$return['log'] = 'facedetection';	
+		$return['launchable'] = 'nok';
+		$return['state'] = 'nok';
+		$cron = cron::byClassAndFunction('facedetection', 'FaceAnalyse');
+		if(is_object($cron) && $cron->running())
+			$return['state'] = 'ok';
+		return $return;
+	}
+	public static function deamon_start($_debug = false) {
+		$deamon_info = self::deamon_info();
+		if ($deamon_info['launchable'] != 'ok') 
+			return;
+		log::remove('facedetection');
+		self::deamon_stop();
+		$cron = cron::byClassAndFunction('facedetection', 'FaceAnalyse');
+		if (!is_object($cron)) {
+			$cron = new cron();
+			$cron->setClass('facedetection');
+			$cron->setFunction('FaceAnalyse');
+			$cron->setEnable(1);
+			$cron->setDeamon(1);
+			$cron->setSchedule('* * * * *');
+			$cron->setTimeout('999999');
+			$cron->save();
+		}
+		$cron->start();
+		$cron->run();
+	}
+	public static function deamon_stop() {
+		$cron = cron::byClassAndFunction('facedetection', 'FaceAnalyse');
+		if (is_object($cron)) {
+			$cron->stop();
+			$cron->remove();
+		}
+	}
 	public static function AddCommande($eqLogic,$Name,$_logicalId,$Type="info", $SubType='binary',$icone) 
 	{
 		$Commande = $eqLogic->getCmd(null,$_logicalId);
@@ -115,36 +84,31 @@ class facedetection extends eqLogic {
 		//$Commande->setEventOnly(1);
 		return $Commande;
 	}
-	/*public static function FaceAnalyse() 
+	public static function FaceAnalyse() 
 	{
 		while(true)
 		{
-			$Cameras=facedetection::byType('facedetection');
-			log::add('facedetection', 'debug', $Cameras->getEqLogic());
-			foreach($FaceDetectCamera as $Cameras)
+			foreach(eqLogic::byType('facedetection') as $Cameras)
 			{
-				$EqLogic=$FaceDetectCamera->getEqLogic();
-				log::add('facedetection', 'debug', 'Lancement d\'une détéction sur la camera '.$EqLogic->getName());
-				$FaceDetectCamera->execute();
+				$image='/tmp/FaceAnalyse/analyse.jpg';
+				$Camera->Snapshot($Camera->getUrl(),$image);
+				$NbVisage=$Camera->FaceDetect($image);
+				if ($NbVisage==0)
+					$Camera->checkAndUpdateCmd('facedetection',false);
+				else
+					$Camera->checkAndUpdateCmd('facedetection',true);
+				$Camera->checkAndUpdateCmd('NbVisage',$NbVisage);
 			}
 		}
-	}*/
-}
-
-class facedetectionCmd extends cmd {
-    /*     * *************************Attributs****************************** */
-
-    /*     * ***********************Methode static*************************** */
-
-
-    /*     * *********************Methode d'instance************************* */
-
-    /*
-     * Non obligatoire permet de demander de ne pas supprimer les commandes même si elles ne sont pas dans la nouvelle configuration de l'équipement envoyé en JS
-      public function dontRemoveCmd() {
-      return true;
-      }
-     */
+	}
+	public function getUrl(){
+		$url=explode('://',$this->getConfiguration('cameraUrl'));
+		if($this->getConfiguration('cameraLogin')!='' && $this->getConfiguration('cameraPass')!='')
+			$urlStream=$url[0].'://'.$this->getConfiguration('cameraLogin').':'.$this->getConfiguration('cameraPass').'@'.$url[1];
+		else
+			$urlStream=$this->getConfiguration('cameraUrl');
+		return $urlStream;
+	}
 	public function Snapshot($camurl, $image) {
 		log::add('facedetection', 'debug', 'Telechargement du flux : '.$camurl);
 		$f = fopen($camurl,"r") ;
@@ -169,60 +133,19 @@ class facedetectionCmd extends cmd {
 		fclose($f);
 	}
 	public function FaceDetect($image) {
-		
 		$detector = new FaceDetector('detection.dat');
 		log::add('facedetection', 'debug', 'Début de l\'analyse: '.$image);
 		$detector->faceDetect($image);
 		$len=count($detector->getFace())/3;
 		log::add('facedetection', 'debug', $len.' visage(s) détecté');
 		$detector->toJpeg($image);//Encadre dans la photo le visage
-		if ($len==0)
-		{
-			$this->setCollectDate('');
-			$this->event(0);
-			$this->save();
-		}
-		else
-		{
-			$this->setCollectDate('');
-			$this->event(1);
-			$this->save();
-		}
-		return $len.' visage(s) détecté';
+		return $len;
 	}
-    public function execute($_options = array()) {
-		$EqLogic=$this->getEqLogic();
-		$Camera=camera::byId($EqLogic->getConfiguration('snapshots'));
-		
-		if (netMatch('192.168.*.*', getClientIp())) {
-			$protocole = 'protocole';
-		} else {
-			$protocole = 'protocoleExt';
-		}
-		$camurl=$Camera->getUrl($Camera->getConfiguration('urlStream'), '', $protocole);
-		switch($this->getLogicalId())
-		{
-			case 'facedetection':
-				$image=dirname(__FILE__) . '/../../../../tmp/analyse.jpg';
-				self::Snapshot($camurl,$image);
-				self::FaceDetect($image);
-			break;
-			case 'snapshots':
-				$image=dirname(__FILE__) .'/../../ressources/FaceDetection/Snapshot_'.date("YmdHis").'.jpg';
-				self::Snapshot($camurl,$image);
-			break;
-			case 'snapshotfacedetect':
-				$image=dirname(__FILE__) .'/../../ressources/Snapshots/Snapshot_'.date("YmdHis").'.jpg';
-				self::Snapshot($camurl,$image);
-				self::FaceDetect($image);
-			break;
-			case 'snapshotdir':
-			break;
-			
-		}
-    }
+}
 
-    /*     * **********************Getteur Setteur*************************** */
+class facedetectionCmd extends cmd {
+    public function execute($_options = array()) {
+    }
 }
 
 ?>

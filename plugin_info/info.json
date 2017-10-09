@@ -1,0 +1,11 @@
+{
+	"id" : "facedetection",
+	"name" : "Face detection",
+	"description" : "Plugin permetant la detection des visage",
+	"licence" : "AGPL",
+	"author" : "Halbout Michael",
+	"require" : "2.4",
+	"category" : "security",
+	"hasOwnDeamon" : true,
+	"hasDependency" : true
+}
