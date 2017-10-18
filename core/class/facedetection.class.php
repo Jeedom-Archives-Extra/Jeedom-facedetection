@@ -93,7 +93,7 @@ class facedetection extends eqLogic {
 	{
 		while(true)
 		{
-			foreach(eqLogic::byType('facedetection') as $Cameras)
+			foreach(eqLogic::byType('facedetection') as $Camera)
 			{
 				$image='/tmp/FaceAnalyse/analyse.jpg';
 				$Camera->Snapshot($Camera->getUrl(),$image);
