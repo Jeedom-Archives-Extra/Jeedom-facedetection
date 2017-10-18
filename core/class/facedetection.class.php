@@ -128,7 +128,7 @@ class facedetection extends eqLogic {
 				$r.=fread($f,512);
 			$start=stripos($r,"Content-Length");
 			$frame=substr($r,$start);
-			$start=stripos($frame,"\n")+3;
+			$start=stripos($frame,"\r\n")+4;
 			$frame=substr($frame,$start);
 			$stop=stripos($frame,'--myboundary')-2;
 			$frame=substr($frame,0,$stop);
