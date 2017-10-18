@@ -15,6 +15,8 @@ class facedetection extends eqLogic {
 		$return['progress_file'] = '/tmp/compilation_facedetection_in_progress';
 		if (exec('dpkg -s php5-gd | grep -c "Status: install"') ==1)
 				$return['state'] = 'ok';
+		elseif (exec('dpkg -s php7.0-gd | grep -c "Status: install"') ==1)
+				$return['state'] = 'ok';
 		else
 			$return['state'] = 'nok';
 		return $return;
@@ -25,6 +27,9 @@ class facedetection extends eqLogic {
 		}
 		log::remove('facedetection_update');
 		$cmd = 'sudo apt-get install php5-gd';
+		$cmd .= ' >> ' . log::getPathToLog('facedetection_update') . ' 2>&1 &';
+		exec($cmd);		
+		$cmd = 'sudo apt-get install php7.0-gd';
 		$cmd .= ' >> ' . log::getPathToLog('facedetection_update') . ' 2>&1 &';
 		exec($cmd);		
 	}
