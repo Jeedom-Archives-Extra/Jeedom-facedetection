@@ -36,7 +36,7 @@ class facedetection extends eqLogic {
 	public static function deamon_info() {
 		$return = array();
 		$return['log'] = 'facedetection';	
-		$return['launchable'] = 'nok';
+		$return['launchable'] = 'ok';
 		$return['state'] = 'nok';
 		$cron = cron::byClassAndFunction('facedetection', 'FaceAnalyse');
 		if(is_object($cron) && $cron->running())
