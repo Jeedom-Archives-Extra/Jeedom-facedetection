@@ -6,38 +6,6 @@ $('#table_cmd tbody').delegate('.bt_selectCmdExpression', 'click', function() {
 		$(_this).closest('.cmd').find('.eqLogicAttr[data-l1key=configuration][data-l2key=snapshots]').val(result.human);
 	});
 });   
-//function SelectCamera() {
-		$.ajax({
-		type: "POST",
-		timeout:8000, 
-		url: "plugins/facedetection/core/ajax/facedetection.ajax.php",
-		data: {
-			action: "SearchCamera",
-		},
-		dataType: 'json',
-		error: function(request, status, error) {
-			handleAjaxError(request, status, error);
-		},
-		success: function(data) { 
-			if (data.state != 'ok') {
-				$('#div_alert').showAlert({message: data.result, level: 'danger'});
-				return;
-			}
-			if (data.result!=false)
-			{
-			var Valeur=$('.eqLogicAttr[data-l1key=configuration][data-l2key=snapshots]').val();
-			var Select=$('<select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="snapshots">');
-				for (var i in data.result) {
-					Select.append(
-						$('<option>').attr('value',data.result[i].Id)
-						.text(data.result[i].Nom));
-				}
-			$('.CameraSelect').html(Select);
-			$('.eqLogicAttr[data-l1key=configuration][data-l2key=snapshots] option[value="'+Valeur+'"]').prop('selected', true);
-			}
-		}
-	});	
-//}
 function addCmdToTable(_cmd) {
   if (!isset(_cmd)) {
         var _cmd = {};
@@ -58,18 +26,12 @@ function addCmdToTable(_cmd) {
 				.append($('<i class="fa fa-flag">')).text('Icone'))
 			.append($('<span class="cmdAttr" data-l1key="display" data-l2key="icon" style="margin-left : 10px;">'))));
 	tr.append($('<td>')
-			.append($('<div style="width : 40%;display : inline-block;">')
-			.append($('<span>')
-				.append($('<input type="checkbox" class="cmdAttr" data-size="mini" data-label-text="{{Historiser}}" data-l1key="isHistorized" checked/>')))
-			.append($('</br>'))
-			.append($('<span>')
-				.append($('<input type="checkbox" class="cmdAttr" data-size="mini" data-label-text="{{Afficher}}" data-l1key="isVisible" checked/>'))))
-			.append($('<div style="width : 40%;display : inline-block;">')
-				.append($('<input type="hidden" class="cmdAttr form-control input-sm" data-l1key="cache" data-l2key="enable" />'))
-				.append($('<label>').text('{{Lifetime}}')
-					.append($('<input type="texte" class="cmdAttr form-control input-sm" data-l1key="cache" data-l2key="lifetime" placeholder="{{Lifetime}}" title="Lifetime"/>')))
-				.append($('<input type="hidden" class="cmdAttr" data-l1key="type" value="info" />'))
-				.append($('<input type="hidden" class="cmdAttr" data-l1key="subType" value="binary" />'))));  
+		.append($('<label>').text('{{Historiser}}')
+			.append($('<input type="checkbox" class="cmdAttr" data-size="mini" data-label-text="{{Historiser}}" data-l1key="isHistorized" checked/>')))
+		.append($('<label>').text('{{Afficher}}')
+			.append($('<input type="checkbox" class="cmdAttr" data-size="mini" data-label-text="{{Afficher}}" data-l1key="isVisible" checked/>')))
+		.append($('<input type="hidden" class="cmdAttr" data-l1key="type" value="info" />'))
+		.append($('<input type="hidden" class="cmdAttr" data-l1key="subType" value="binary" />')));  
   
 		var parmetre=$('<td>');
 	if (is_numeric(_cmd.id)) {
