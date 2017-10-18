@@ -95,6 +95,8 @@ class facedetection extends eqLogic {
 		{
 			foreach(eqLogic::byType('facedetection') as $Camera)
 			{
+				exec('sudo mkdir -R /tmp/FaceAnalyse');
+				exec('sudo chmod -R 777 /tmp/FaceAnalyse');
 				$image='/tmp/FaceAnalyse/analyse.jpg';
 				$Camera->Snapshot($Camera->getUrl(),$image);
 				$NbVisage=$Camera->FaceDetect($image);
