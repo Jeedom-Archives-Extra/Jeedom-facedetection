@@ -1,11 +1,14 @@
 {
 	"id" : "facedetection",
 	"name" : "Face detection",
-	"description" : "Plugin permetant la detection des visage",
+	"description" : "Plugin permettant la détection des visages",
 	"licence" : "AGPL",
 	"author" : "Halbout Michael",
 	"require" : "2.4",
 	"category" : "security",
 	"hasOwnDeamon" : true,
-	"hasDependency" : true
+	"hasDependency" : true,
+	"issue" : "https://github.com/mika-nt28/Jeedom-facedetection/issues",
+ 	"changelog" : "https://github.com/mika-nt28/Jeedom-facedetection/commits/master",
+ 	"documentation" : "https://jeedom.github.io/documentation/third_plugin/facedetection/fr_FR/index.html"
 }

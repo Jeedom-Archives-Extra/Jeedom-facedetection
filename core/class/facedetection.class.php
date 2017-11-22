@@ -15,6 +15,8 @@ class facedetection extends eqLogic {
 		$return['progress_file'] = '/tmp/compilation_facedetection_in_progress';
 		if (exec('dpkg -s php5-gd | grep -c "Status: install"') ==1)
 				$return['state'] = 'ok';
+		elseif (exec('dpkg -s php7.0-gd | grep -c "Status: install"') ==1)
+				$return['state'] = 'ok';
 		else
 			$return['state'] = 'nok';
 		return $return;
@@ -27,11 +29,14 @@ class facedetection extends eqLogic {
 		$cmd = 'sudo apt-get install php5-gd';
 		$cmd .= ' >> ' . log::getPathToLog('facedetection_update') . ' 2>&1 &';
 		exec($cmd);		
+		$cmd = 'sudo apt-get install php7.0-gd';
+		$cmd .= ' >> ' . log::getPathToLog('facedetection_update') . ' 2>&1 &';
+		exec($cmd);		
 	}
 	public static function deamon_info() {
 		$return = array();
 		$return['log'] = 'facedetection';	
-		$return['launchable'] = 'nok';
+		$return['launchable'] = 'ok';
 		$return['state'] = 'nok';
 		$cron = cron::byClassAndFunction('facedetection', 'FaceAnalyse');
 		if(is_object($cron) && $cron->running())
@@ -88,8 +93,10 @@ class facedetection extends eqLogic {
 	{
 		while(true)
 		{
-			foreach(eqLogic::byType('facedetection') as $Cameras)
+			foreach(eqLogic::byType('facedetection') as $Camera)
 			{
+				exec('sudo mkdir /tmp/FaceAnalyse');
+				exec('sudo chmod -R 777 /tmp/FaceAnalyse');
 				$image='/tmp/FaceAnalyse/analyse.jpg';
 				$Camera->Snapshot($Camera->getUrl(),$image);
 				$NbVisage=$Camera->FaceDetect($image);
@@ -121,7 +128,7 @@ class facedetection extends eqLogic {
 				$r.=fread($f,512);
 			$start=stripos($r,"Content-Length");
 			$frame=substr($r,$start);
-			$start=stripos($frame,"\n")+3;
+			$start=stripos($frame,"\r\n")+4;
 			$frame=substr($frame,$start);
 			$stop=stripos($frame,'--myboundary')-2;
 			$frame=substr($frame,0,$stop);
